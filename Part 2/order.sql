@@ -7,7 +7,7 @@ CREATE TABLE "order"
     status     VARCHAR(20)  NOT NULL,
     order_date DATE         NOT NULL,
     user_id    INT          NOT NULL,
-    CONSTRAINT FK_order_user_id FOREIGN KEY (user_id) REFERENCES XPASYN00.REGISTERED_USER
+    CONSTRAINT FK_order_user_id FOREIGN KEY (user_id) REFERENCES REGISTERED_USER
 );
 
 
