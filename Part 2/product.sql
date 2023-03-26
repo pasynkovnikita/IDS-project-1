@@ -4,14 +4,14 @@ DROP TABLE category;
 CREATE TABLE category
 (
     category_id   INT PRIMARY KEY,
-    category_name VARCHAR(50) NOT NULL
+    category_name VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE product
 (
     product_id    INT PRIMARY KEY,
     category_id   INT         NOT NULL,
-    product_name  VARCHAR(50) NOT NULL,
+    product_name  VARCHAR(255) NOT NULL,
     product_price FLOAT       NOT NULL,
     product_count INT         NOT NULL,
     CONSTRAINT FK_product_category_id FOREIGN KEY (category_id) REFERENCES category
