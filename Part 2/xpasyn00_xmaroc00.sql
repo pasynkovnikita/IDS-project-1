@@ -1,12 +1,13 @@
--- DROP TABLE "user";
--- DROP TABLE employee;
--- DROP TABLE registered_user;
+-- DROP TABLE "user" CASCADE CONSTRAINTS;
+-- DROP TABLE employee CASCADE CONSTRAINTS ;
+-- DROP TABLE registered_user CASCADE CONSTRAINTS;
 -- DROP TABLE "order";
 -- DROP TABLE category;
 -- DROP TABLE product;
 -- DROP TABLE contains;
 -- DROP TABLE payment;
 
+-- alter date because of some error with date input we could not solve
 ALTER SESSION SET NLS_DATE_FORMAT = 'dd.mm.yyyy';
 
 -- user has user_id as a primary key, which is a foreign key for employee and registered_user
