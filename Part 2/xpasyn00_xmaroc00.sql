@@ -48,32 +48,75 @@ CREATE TABLE registered_user
     CONSTRAINT FK_user_id FOREIGN KEY (user_id) REFERENCES "user" (user_id)
 );
 
--- First, we have to create tables for users
-INSERT INTO "user" (type)
-VALUES ('registered_user');
-INSERT INTO registered_user (user_id, login, password, first_name, last_name, email, phone_number, address)
-VALUES (1, 'xpasyn00', 'qwerty12345', 'Nikita', 'Pasynkov', 'xpasyn00@fit.cz', '+420777777777', 'Brno 1');
+create or replace procedure create_employee(
+    ins_first_name varchar2,
+    ins_last_name varchar2
+)
+as
+    genUserId INT;
+begin
+    INSERT INTO "user" (type)
+    VALUES ('employee')
+    RETURNING user_id INTO genUserId;
 
-INSERT INTO "user" (type)
-VALUES ('employee');
-INSERT INTO employee (employee_id, first_name, last_name)
-VALUES (2, 'John', 'Doe');
+    INSERT INTO employee (employee_id, first_name, last_name)
+    VALUES (genUserId, ins_first_name, ins_last_name);
+end;
+
+create or replace procedure create_registered_user(
+    ins_login varchar2,
+    ins_password varchar2,
+    ins_first_name varchar2,
+    ins_last_name varchar2,
+    ins_email varchar2,
+    ins_phone_number varchar2,
+    ins_address varchar2
+)
+as
+    genUserId INT;
+begin
+    INSERT INTO "user" (type)
+    VALUES ('registered_user')
+    RETURNING user_id INTO genUserId;
+
+    INSERT INTO registered_user (user_id, login, password, first_name, last_name, email, phone_number, address)
+    VALUES (genUserId, ins_login, ins_password, ins_first_name, ins_last_name, ins_email, ins_phone_number,
+            ins_address);
+end;
+
+CALL create_registered_user('xpasyn00', 'qwerty12345', 'Nikita', 'Pasynkov', 'xpasyn00@fit.cz', '+420777777777', 'Brno 1');
+CALL create_employee('John', 'Doe');
+
+-- INSERT INTO registered_user (user_id, login, password, first_name, last_name, email, phone_number, address)
+-- VALUES (1, 'xpasyn00', 'qwerty12345', 'Nikita', 'Pasynkov', 'xpasyn00@fit.cz', '+420777777777', 'Brno 1');
+
+-- INSERT INTO "user" (type)
+-- VALUES ('employee');
+-- INSERT INTO employee (employee_id, first_name, last_name)
+-- VALUES (2, 'John', 'Doe');
 
 CREATE TABLE "order"
 (
-    order_id   INT GENERATED ALWAYS AS IDENTITY NOT NULL PRIMARY KEY,
-    address    VARCHAR(255)                     NOT NULL,
-    status     VARCHAR(20)                      NOT NULL CHECK (status IN ('created', 'paid', 'shipped', 'cancelled')),
-    order_date DATE                             NOT NULL,
-    user_id    INT                              NOT NULL,
-    CONSTRAINT FK_order_user_id FOREIGN KEY (user_id) REFERENCES registered_user
+    order_id    INT GENERATED ALWAYS AS IDENTITY NOT NULL PRIMARY KEY,
+    address     VARCHAR(255)                     NOT NULL,
+    status      VARCHAR(20)                      NOT NULL CHECK (status IN ('created', 'paid', 'shipped', 'cancelled')),
+    order_date  DATE                             NOT NULL,
+    user_id     INT                              NOT NULL,
+    -- expeduje objednavku
+    employee_id INT                              NOT NULL,
+    CONSTRAINT FK_order_user_id FOREIGN KEY (user_id) REFERENCES registered_user,
+    CONSTRAINT FK_order_employee_id FOREIGN KEY (employee_id) REFERENCES employee
 );
 
 -- add an order
-INSERT INTO "order" (address, status, order_date, user_id)
-VALUES ('Brno 1', 'shipped', '01.01.2023', 1);
-INSERT INTO "order" (address, status, order_date, user_id)
-VALUES ('Brno 1', 'created', '03.05.2023', 1);
+INSERT INTO "order" (address, status, order_date, user_id, employee_id)
+VALUES ('Brno 1', 'shipped', '01.01.2023', 1, 2);
+INSERT INTO "order" (address, status, order_date, user_id, employee_id)
+VALUES ('Brno 1', 'created', '03.05.2023', 1, 2);
+
+-- First, we have to create tables for users
+INSERT INTO "user" (type)
+VALUES ('registered_user');
 
 CREATE TABLE category
 (
