@@ -9,6 +9,9 @@
 
 ALTER SESSION SET NLS_DATE_FORMAT = 'dd.mm.yyyy';
 
+-- user has user_id as a primary key, which is a foreign key for employee and registered_user
+-- user has type attribute, which shows if the user is an employee or a registered_user
+-- employee and registered_user are specializations of user
 CREATE TABLE "user"
 (
     user_id INT GENERATED AS IDENTITY PRIMARY KEY,
@@ -17,15 +20,16 @@ CREATE TABLE "user"
 
 CREATE TABLE employee
 (
-    employee_id INT NOT NULL PRIMARY KEY,
+    employee_id INT         NOT NULL PRIMARY KEY,
     first_name  VARCHAR(20) NOT NULL,
     last_name   VARCHAR(20) NOT NULL,
-    CONSTRAINT FK_employee_id FOREIGN KEY (employee_id) REFERENCES "user" (user_id) -- employee is a specialization of user
+    -- employee is a specialization of user
+    CONSTRAINT FK_employee_id FOREIGN KEY (employee_id) REFERENCES "user" (user_id)
 );
 
 CREATE TABLE registered_user
 (
-    user_id      INT NOT NULL PRIMARY KEY,
+    user_id      INT          NOT NULL PRIMARY KEY,
     login        VARCHAR(20)  NOT NULL,
     password     VARCHAR(20)  NOT NULL,
     first_name   VARCHAR(20)  NOT NULL,
@@ -33,9 +37,13 @@ CREATE TABLE registered_user
     email        VARCHAR(20)  NOT NULL,
     phone_number VARCHAR(20)  NOT NULL,
     address      VARCHAR(256) NOT NULL,
+--     check if password is longer than 8 symbols and shorter than 20
     CONSTRAINT length_password CHECK (length(password) between 8 and 20),
+--     validate email
     CONSTRAINT email_validation CHECK (REGEXP_LIKE(email, '^[A-Za-z]+[A-Za-z0-9.]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$')),
+--    validate phone number
     CONSTRAINT phone_number_check CHECK (REGEXP_LIKE(phone_number, '^\+?[0-9]{11,13}$')),
+    -- registered_user is a specialization of user
     CONSTRAINT FK_user_id FOREIGN KEY (user_id) REFERENCES "user" (user_id)
 );
 
@@ -49,8 +57,6 @@ INSERT INTO "user" (type)
 VALUES ('employee');
 INSERT INTO employee (employee_id, first_name, last_name)
 VALUES (2, 'John', 'Doe');
-
-
 
 CREATE TABLE "order"
 (
@@ -67,7 +73,6 @@ INSERT INTO "order" (address, status, order_date, user_id)
 VALUES ('Brno 1', 'shipped', '01.01.2023', 1);
 INSERT INTO "order" (address, status, order_date, user_id)
 VALUES ('Brno 1', 'created', '03.05.2023', 1);
-
 
 CREATE TABLE category
 (
@@ -132,18 +137,26 @@ INSERT INTO payment (order_id, user_id, sum, payment_date)
 VALUES (1, 1, 350, '01.01.2023');
 
 -- show the created data
-SELECT * FROM "user";
+SELECT *
+FROM "user";
 
-SELECT * FROM employee;
+SELECT *
+FROM employee;
 
-SELECT * FROM registered_user;
+SELECT *
+FROM registered_user;
 
-SELECT * FROM "order";
+SELECT *
+FROM "order";
 
-SELECT * FROM category;
+SELECT *
+FROM category;
 
-SELECT * FROM product;
+SELECT *
+FROM product;
 
-SELECT * FROM contains;
+SELECT *
+FROM contains;
 
-SELECT * FROM payment;
+SELECT *
+FROM payment;
