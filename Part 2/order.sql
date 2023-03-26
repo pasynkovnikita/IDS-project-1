@@ -1,4 +1,4 @@
-DROP TABLE "order";
+ALTER SESSION SET NLS_DATE_FORMAT = 'dd.mm.yyyy';
 
 CREATE TABLE "order"
 (
