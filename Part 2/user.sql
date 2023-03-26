@@ -8,7 +8,8 @@ CREATE TABLE registered_user
     email        VARCHAR(20)                      NOT NULL,
     phone_number VARCHAR(20)                      NOT NULL,
     address      VARCHAR(256)                     NOT NULL,
-    CONSTRAINT length_password CHECK (length(password) between 8 and 20)
+    CONSTRAINT length_password CHECK (length(password) between 8 and 20),
+    CONSTRAINT email_validation CHECK (REGEXP_LIKE(email, '^[A-Za-z]+[A-Za-z0-9.]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$'))
 );
 
 CREATE TABLE employee
