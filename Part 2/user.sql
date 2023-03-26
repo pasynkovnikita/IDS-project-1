@@ -14,7 +14,15 @@ CREATE TABLE registered_user
     CONSTRAINT phone_number_check CHECK (REGEXP_LIKE(phone_number, '^\+?[0-9]{11,13}$'))
 );
 
-INSERT INTO registered_user (user_id, login, password, first_name, last_name, email, phone_number, address)
-VALUES (1, 'user1', 'password1', 'John', 'Doe', 'xqwerty00@gmail.com', '79999210755', '123 Main St, New York, NY 10001');
+CREATE TABLE employee
+(
+    employee INT GENERATED ALWAYS AS IDENTITY NOT NULL PRIMARY KEY
 
-SELECT * FROM registered_user;
+);
+
+INSERT INTO registered_user (login, password, first_name, last_name, email, phone_number, address)
+VALUES ('user1', 'password1', 'John', 'Doe', 'xqwerty00@gmail.com', '79999210755',
+        '123 Main St, New York, NY 10001');
+
+SELECT *
+FROM registered_user;
