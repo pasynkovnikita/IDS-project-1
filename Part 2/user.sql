@@ -1,5 +1,3 @@
-DROP TABLE registered_user;
-
 CREATE TABLE registered_user
 (
     user_id      INT GENERATED ALWAYS AS IDENTITY NOT NULL PRIMARY KEY,
@@ -11,6 +9,7 @@ CREATE TABLE registered_user
     phone_number VARCHAR(20)                      NOT NULL,
     address      VARCHAR(256)                     NOT NULL,
     CONSTRAINT length_password CHECK (length(password) between 8 and 20),
+    CONSTRAINT email_validation CHECK (REGEXP_LIKE(email, '^[A-Za-z]+[A-Za-z0-9.]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$')),
     CONSTRAINT phone_number_check CHECK (REGEXP_LIKE(phone_number, '^\+?[0-9]{11,13}$'))
 );
 
