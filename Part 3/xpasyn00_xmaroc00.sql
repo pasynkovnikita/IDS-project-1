@@ -154,12 +154,16 @@ create or replace procedure create_product(
     ins_product_count int
 ) as
     CategoryId INT;
+    ProductCount INT;
 begin
-    SELECT category_id INTO CategoryId FROM category WHERE category_name = ins_category_name;
-    IF CategoryId IS NULL THEN
-        INSERT INTO category (category_name)
-        VALUES (ins_category_name);
+    SELECT COUNT(*) INTO ProductCount FROM product WHERE product_name = ins_product_name;
+
+    IF ProductCount = 0 THEN
+        insert into category (category_name) values (ins_category_name);
     END IF;
+
+    SELECT category_id INTO CategoryId FROM category WHERE category_name = ins_category_name;
+
     INSERT INTO product (category_id, product_name, product_price, product_count)
     VALUES (CategoryId, ins_product_name, ins_product_price, ins_product_count);
 end;
@@ -167,6 +171,8 @@ end;
 -- add products
 call create_product('foreign-books', 'Harry Potter', 100, 10);
 call create_product('magazines', 'National Geographic', 50, 50);
+call create_product('foreign-books', 'Lord of the Rings', 200, 20);
+call create_product('classics', 'test', 200, 20);
 
 CREATE TABLE contains
 (
