@@ -202,7 +202,18 @@ CREATE TABLE payment
     CONSTRAINT FK_payment_user FOREIGN KEY (user_id) REFERENCES registered_user
 );
 
+create or replace procedure create_payment(
+    ins_order_id int,
+    ins_user_id int,
+    ins_sum float,
+    ins_payment_date date
+) as
+begin
+    INSERT INTO payment (order_id, user_id, sum, payment_date)
+    VALUES (ins_order_id, ins_user_id, ins_sum, ins_payment_date);
+end;
+
 -- add a payment for the order
-INSERT INTO payment (order_id, user_id, sum, payment_date)
-VALUES (1, 1, 350, '01.01.2023');
+call create_payment(2, 1, 350, '03.05.2023');
+call create_payment(2, 1, 350, '03.05.2023');
 
