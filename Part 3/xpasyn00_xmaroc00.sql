@@ -128,6 +128,22 @@ end;
 call create_order('Brno', '01.01.2023', 1);
 call create_order('Prague', '03.05.2023', 1);
 
+create or replace procedure change_order_state(
+    ins_order_id int,
+    ins_status varchar2
+) as
+begin
+    if ins_status in ('paid', 'shipped', 'cancelled') then
+        update "order"
+        set status = ins_status
+        where order_id = ins_order_id;
+    else
+        raise_application_error(-20000, 'Invalid status');
+    end if;
+end;
+
+call change_order_state(1, 'paid');
+
 CREATE TABLE category
 (
     category_id   INT GENERATED ALWAYS AS IDENTITY NOT NULL PRIMARY KEY,
