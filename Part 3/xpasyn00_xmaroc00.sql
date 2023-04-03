@@ -99,7 +99,7 @@ CREATE TABLE "order"
 (
     order_id    INT GENERATED ALWAYS AS IDENTITY NOT NULL PRIMARY KEY,
     address     VARCHAR(255)                     NOT NULL,
-    status      VARCHAR(20)                      NOT NULL CHECK (status IN ('created', 'paid', 'shipped', 'cancelled')),
+    status      VARCHAR(20) DEFAULT ('created') CHECK (status IN ('created', 'paid', 'shipped', 'cancelled')),
     order_date  DATE                             NOT NULL,
     user_id     INT                              NOT NULL,
     -- expeduje objednavku
@@ -108,11 +108,21 @@ CREATE TABLE "order"
     CONSTRAINT FK_order_employee_id FOREIGN KEY (employee_id) REFERENCES employee
 );
 
+-- procedure for creating order
+create or replace procedure create_order(
+    ins_address varchar2,
+    ins_order_date date,
+    ins_user_id int,
+    ins_employee_id int
+) as
+begin
+    INSERT INTO "order" (address, order_date, user_id, employee_id)
+    VALUES (ins_address, ins_order_date, ins_user_id, ins_employee_id);
+end;
+
 -- add an order
-INSERT INTO "order" (address, status, order_date, user_id, employee_id)
-VALUES ('Brno 1', 'shipped', '01.01.2023', 1, 2);
-INSERT INTO "order" (address, status, order_date, user_id, employee_id)
-VALUES ('Brno 1', 'created', '03.05.2023', 1, 2);
+call create_order('Brno 1', '01.01.2023', 1, 2);
+call create_order('Brno 2', '03.05.2023', 1, 2);
 
 -- First, we have to create tables for users
 INSERT INTO "user" (type)
