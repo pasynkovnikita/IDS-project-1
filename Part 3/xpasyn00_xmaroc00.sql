@@ -220,13 +220,27 @@ CREATE TABLE contains
     CONSTRAINT FK_order_id FOREIGN KEY (order_id) REFERENCES "order" (order_id)
 );
 
+create or replace procedure add_product_to_order(
+    ins_product_name varchar2,
+    ins_order_id int,
+    ins_product_count_ordered int
+) as
+    ProductId int;
+begin
+    SELECT product_id
+    INTO ProductId
+    FROM product
+    WHERE product_name = ins_product_name;
+
+    INSERT INTO contains (product_id, order_id, product_count_ordered)
+    VALUES (ProductId, ins_order_id, ins_product_count_ordered);
+
+end;
+
 -- contain table to link order and products
-INSERT INTO contains (product_id, order_id, product_count_ordered)
-VALUES (1, 1, 1);
-INSERT INTO contains (product_id, order_id, product_count_ordered)
-VALUES (2, 1, 2);
-INSERT INTO contains (product_id, order_id, product_count_ordered)
-VALUES (3, 2, 3);
+call add_product_to_order('Harry Potter', 1, 1);
+call add_product_to_order('Lord of the Rings', 1, 2);
+call add_product_to_order('The Hitchhiking Guide to Galaxy', 2, 3);
 
 CREATE TABLE payment
 (
