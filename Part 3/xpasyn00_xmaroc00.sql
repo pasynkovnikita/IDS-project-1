@@ -160,19 +160,30 @@ create or replace procedure create_product(
     ins_product_price float,
     ins_product_count int
 ) as
-    CategoryId INT;
-    ProductCount INT;
+    CategoryId    INT;
+    CategoryCount INT; -- check if category already exists
+    ProductCount  INT; -- check if product already exists
 begin
-    SELECT COUNT(*) INTO ProductCount FROM product WHERE product_name = ins_product_name;
+    --     check for existing category
+    SELECT COUNT(*) into CategoryCount FROM category WHERE category_name = ins_category_name;
 
-    IF ProductCount = 0 THEN
+    IF CategoryCount = 0 THEN
         insert into category (category_name) values (ins_category_name);
     END IF;
 
-    SELECT category_id INTO CategoryId FROM category WHERE category_name = ins_category_name;
+--     check for existing product
+    SELECT COUNT(*) into ProductCount FROM product WHERE product_name = ins_product_name;
 
-    INSERT INTO product (category_id, product_name, product_price, product_count)
-    VALUES (CategoryId, ins_product_name, ins_product_price, ins_product_count);
+    IF ProductCount = 0 THEN
+        SELECT category_id
+        INTO CategoryId
+        FROM category
+        WHERE category_name = ins_category_name; -- get category id by its name
+
+        INSERT INTO product (category_id, product_name, product_price, product_count)
+        VALUES (CategoryId, ins_product_name, ins_product_price, ins_product_count);
+    END IF;
+
 end;
 
 -- add products
