@@ -129,7 +129,7 @@ call create_order('Brno 2', '03.05.2023', 1, 2);
 CREATE TABLE category
 (
     category_id   INT GENERATED ALWAYS AS IDENTITY NOT NULL PRIMARY KEY,
-    category_name VARCHAR(255)                     NOT NULL
+    category_name VARCHAR(255) UNIQUE              NOT NULL
 );
 
 -- procedure for creating product category
