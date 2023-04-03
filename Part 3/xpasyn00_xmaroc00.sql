@@ -125,11 +125,17 @@ CREATE TABLE category
     category_name VARCHAR(255)                     NOT NULL
 );
 
--- add a category before adding products
-INSERT INTO category (category_name)
-VALUES ('foreign-books');
-INSERT INTO category (category_name)
-VALUES ('magazines');
+-- procedure for creating product category
+create or replace procedure create_category(
+    ins_category_name varchar2
+) as
+begin
+    INSERT INTO category (category_name)
+    VALUES (ins_category_name);
+end;
+
+call create_category('magazines');
+call create_category('foreign-books');
 
 CREATE TABLE product
 (
@@ -141,13 +147,26 @@ CREATE TABLE product
     CONSTRAINT FK_product_category_id FOREIGN KEY (category_id) REFERENCES category
 );
 
+create or replace procedure create_product(
+    ins_category_name varchar2,
+    ins_product_name varchar2,
+    ins_product_price float,
+    ins_product_count int
+) as
+    CategoryId INT;
+begin
+    SELECT category_id INTO CategoryId FROM category WHERE category_name = ins_category_name;
+    IF CategoryId IS NULL THEN
+        INSERT INTO category (category_name)
+        VALUES (ins_category_name);
+    END IF;
+    INSERT INTO product (category_id, product_name, product_price, product_count)
+    VALUES (CategoryId, ins_product_name, ins_product_price, ins_product_count);
+end;
+
 -- add products
-INSERT INTO product (category_id, product_name, product_price, product_count)
-VALUES (1, 'Harry Potter', 100, 10);
-INSERT INTO product (category_id, product_name, product_price, product_count)
-VALUES (1, 'Lord of the Rings', 200, 20);
-INSERT INTO product (category_id, product_name, product_price, product_count)
-VALUES (2, 'National Geographic', 50, 50);
+call create_product('foreign-books', 'Harry Potter', 100, 10);
+call create_product('magazines', 'National Geographic', 50, 50);
 
 CREATE TABLE contains
 (
