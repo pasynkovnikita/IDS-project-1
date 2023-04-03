@@ -308,6 +308,13 @@ GROUP BY product_count_ordered, product_name
 ORDER BY product_count_ordered DESC;
 
 --  jeden dotaz obsahující predikát EXISTS
+-- show users who ordered in the year 2023
+SELECT login, first_name, last_name, email
+FROM registered_user
+WHERE EXISTS (SELECT *
+              FROM "order"
+              WHERE "order".user_id = registered_user.user_id
+                AND EXTRACT(YEAR FROM order_date) = 2020);
 
 -- jeden dotaz s predikátem IN s vnořeným selectem (nikoliv IN s množinou konstantních dat)
 -- show users who ordered products from the category 'foreign-books'
