@@ -87,7 +87,9 @@ begin
 end;
 
 CALL create_registered_user('xpasyn00', 'qwerty12345', 'Nikita', 'Pasynkov', 'xpasyn00@fit.cz', '+420777777777',
-                            'Brno 1');
+                            'Brno');
+call create_registered_user('xmaroc00', '1235qwerty', 'Lena', 'Marochkina', 'xmaroc00@fit.cz', '+420774555555',
+                            'Prague');
 CALL create_employee('John', 'Doe');
 
 CREATE TABLE "order"
@@ -123,8 +125,8 @@ begin
 end;
 
 -- add an order
-call create_order('Brno 1', '01.01.2023', 1, 2);
-call create_order('Brno 2', '03.05.2023', 1, 2);
+call create_order('Brno', '01.01.2023', 1);
+call create_order('Prague', '03.05.2023', 1);
 
 CREATE TABLE category
 (
@@ -191,22 +193,23 @@ call create_product('foreign-books', 'Harry Potter', 100, 10);
 call create_product('magazines', 'National Geographic', 50, 50);
 call create_product('foreign-books', 'Lord of the Rings', 200, 20);
 call create_product('classics', 'test', 200, 20);
+call create_product('foreign-books', 'The Hitchhiking Guide to Galaxy', 200, 20);
 
 CREATE TABLE contains
 (
-    product_id    INT NOT NULL,
-    order_id      INT NOT NULL,
-    product_count INT NOT NULL,
+    product_id            INT NOT NULL,
+    order_id              INT NOT NULL,
+    product_count_ordered INT NOT NULL,
     CONSTRAINT FK_product_id FOREIGN KEY (product_id) REFERENCES product (product_id),
     CONSTRAINT FK_order_id FOREIGN KEY (order_id) REFERENCES "order" (order_id)
 );
 
 -- contain table to link order and products
-INSERT INTO contains (product_id, order_id, product_count)
+INSERT INTO contains (product_id, order_id, product_count_ordered)
 VALUES (1, 1, 1);
-INSERT INTO contains (product_id, order_id, product_count)
+INSERT INTO contains (product_id, order_id, product_count_ordered)
 VALUES (2, 1, 2);
-INSERT INTO contains (product_id, order_id, product_count)
+INSERT INTO contains (product_id, order_id, product_count_ordered)
 VALUES (3, 2, 3);
 
 CREATE TABLE payment
