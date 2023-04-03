@@ -48,6 +48,7 @@ CREATE TABLE registered_user
     CONSTRAINT FK_user_id FOREIGN KEY (user_id) REFERENCES "user" (user_id)
 );
 
+-- procedure for creating an employee
 create or replace procedure create_employee(
     ins_first_name varchar2,
     ins_last_name varchar2
@@ -63,6 +64,7 @@ begin
     VALUES (genUserId, ins_first_name, ins_last_name);
 end;
 
+-- procedure for creating a registered user
 create or replace procedure create_registered_user(
     ins_login varchar2,
     ins_password varchar2,
@@ -84,16 +86,9 @@ begin
             ins_address);
 end;
 
-CALL create_registered_user('xpasyn00', 'qwerty12345', 'Nikita', 'Pasynkov', 'xpasyn00@fit.cz', '+420777777777', 'Brno 1');
+CALL create_registered_user('xpasyn00', 'qwerty12345', 'Nikita', 'Pasynkov', 'xpasyn00@fit.cz', '+420777777777',
+                            'Brno 1');
 CALL create_employee('John', 'Doe');
-
--- INSERT INTO registered_user (user_id, login, password, first_name, last_name, email, phone_number, address)
--- VALUES (1, 'xpasyn00', 'qwerty12345', 'Nikita', 'Pasynkov', 'xpasyn00@fit.cz', '+420777777777', 'Brno 1');
-
--- INSERT INTO "user" (type)
--- VALUES ('employee');
--- INSERT INTO employee (employee_id, first_name, last_name)
--- VALUES (2, 'John', 'Doe');
 
 CREATE TABLE "order"
 (
