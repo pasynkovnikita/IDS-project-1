@@ -127,6 +127,8 @@ end;
 -- add an order
 call create_order('Brno', '01.01.2023', 1);
 call create_order('Prague', '03.05.2023', 1);
+call create_order('Prague', '01.01.2023', 2);
+call create_order('Brno', '01.01.2020', 1);
 
 create or replace procedure change_order_state(
     ins_order_id int,
@@ -141,8 +143,6 @@ begin
         raise_application_error(-20000, 'Invalid status');
     end if;
 end;
-
-call change_order_state(1, 'paid');
 
 CREATE TABLE category
 (
@@ -241,6 +241,9 @@ end;
 call add_product_to_order('Harry Potter', 1, 1);
 call add_product_to_order('Lord of the Rings', 1, 2);
 call add_product_to_order('The Hitchhiking Guide to Galaxy', 2, 3);
+
+call add_product_to_order('Harry Potter', 3, 1);
+call add_product_to_order('Lord of the Rings', 3, 2);
 
 CREATE TABLE payment
 (
