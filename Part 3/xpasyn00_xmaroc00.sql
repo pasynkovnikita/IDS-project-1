@@ -271,3 +271,43 @@ end;
 call create_payment(2, 1, 350, '03.05.2023');
 call create_payment(2, 1, 350, '03.05.2023');
 
+call change_order_state(1, 'shipped');
+call change_order_state(2, 'shipped');
+
+call change_order_state(3, 'cancelled');
+call change_order_state(4, 'cancelled');
+
+
+-- dva dotazy využívající spojení dvou tabulek
+
+-- join product and category to show products and their categories
+SELECT product_name, product_price, product_count, category_name
+FROM product
+         LEFT JOIN category ON product.category_id = category.category_id;
+
+-- join order and user tables to show users with their respective orders from Brno
+SELECT login, first_name, last_name, email, order_id, status, order_date
+FROM registered_user
+         LEFT JOIN "order" ON registered_user.user_id = "order".user_id
+WHERE registered_user.address = 'Brno';
+
+-- jeden využívající spojení tří tabulek
+-- show orders with products and their prices - join order, contains and product tables
+SELECT "order".order_id, product_name, product_count_ordered, product_price
+FROM "order"
+         LEFT JOIN contains ON "order".order_id = contains.order_id
+         LEFT JOIN product ON contains.product_id = product.product_id;
+
+-- dva dotazy s klauzulí GROUP BY a agregační funkcí
+-- show most popular products that were already ordered and delivered
+SELECT product_name, SUM(product_count_ordered) AS products_delivered
+FROM product
+         LEFT JOIN contains ON product.product_id = contains.product_id
+         left join "order" on contains.order_id = "order".order_id
+WHERE "order".status = 'shipped'
+GROUP BY product_count_ordered, product_name
+ORDER BY product_count_ordered DESC;
+
+--  jeden dotaz obsahující predikát EXISTS
+
+-- jeden dotaz s predikátem IN s vnořeným selectem (nikoliv IN s množinou konstantních dat)
