@@ -107,12 +107,19 @@ CREATE TABLE "order"
 create or replace procedure create_order(
     ins_address varchar2,
     ins_order_date date,
-    ins_user_id int,
-    ins_employee_id int
+    ins_user_id int
 ) as
+    random_employee_id int;
 begin
+    --     get random employee to expedite the order
+    select employee_id
+    into random_employee_id
+    from employee
+    order by dbms_random.value
+        fetch first 1 rows only;
+
     INSERT INTO "order" (address, order_date, user_id, employee_id)
-    VALUES (ins_address, ins_order_date, ins_user_id, ins_employee_id);
+    VALUES (ins_address, ins_order_date, ins_user_id, random_employee_id);
 end;
 
 -- add an order
