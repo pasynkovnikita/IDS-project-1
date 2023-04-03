@@ -242,7 +242,7 @@ call add_product_to_order('Harry Potter', 1, 1);
 call add_product_to_order('Lord of the Rings', 1, 2);
 call add_product_to_order('The Hitchhiking Guide to Galaxy', 2, 3);
 
-call add_product_to_order('Harry Potter', 3, 1);
+call add_product_to_order('National Geographic', 3, 1);
 call add_product_to_order('Lord of the Rings', 3, 2);
 
 CREATE TABLE payment
@@ -277,7 +277,6 @@ call change_order_state(2, 'shipped');
 call change_order_state(3, 'cancelled');
 call change_order_state(4, 'cancelled');
 
-
 -- dva dotazy využívající spojení dvou tabulek
 
 -- join product and category to show products and their categories
@@ -311,3 +310,13 @@ ORDER BY product_count_ordered DESC;
 --  jeden dotaz obsahující predikát EXISTS
 
 -- jeden dotaz s predikátem IN s vnořeným selectem (nikoliv IN s množinou konstantních dat)
+-- show users who ordered products from the category 'foreign-books'
+SELECT login, first_name, last_name, email
+FROM registered_user
+WHERE user_id IN (SELECT user_id
+                  FROM "order"
+                           LEFT JOIN contains ON "order".order_id = contains.order_id
+                           LEFT JOIN product ON contains.product_id = product.product_id
+                           LEFT JOIN category ON product.category_id = category.category_id
+                  WHERE category_name = 'foreign-books');
+
