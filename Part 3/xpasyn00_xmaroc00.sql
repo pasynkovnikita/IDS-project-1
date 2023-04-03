@@ -119,10 +119,6 @@ end;
 call create_order('Brno 1', '01.01.2023', 1, 2);
 call create_order('Brno 2', '03.05.2023', 1, 2);
 
--- First, we have to create tables for users
-INSERT INTO "user" (type)
-VALUES ('registered_user');
-
 CREATE TABLE category
 (
     category_id   INT GENERATED ALWAYS AS IDENTITY NOT NULL PRIMARY KEY,
