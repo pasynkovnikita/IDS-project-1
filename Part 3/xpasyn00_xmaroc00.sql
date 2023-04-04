@@ -311,6 +311,19 @@ WHERE "order".status = 'shipped'
 GROUP BY product_count_ordered, product_name
 ORDER BY product_count_ordered DESC;
 
+-- show users most expensive orders that were ordered and payed from Brno after 2019
+SELECT user_id, "order".order_id,  SUM(product_price * product_count_ordered) AS order_price
+FROM "order"
+         LEFT JOIN contains ON "order".order_id = contains.order_id
+         LEFT JOIN product ON contains.product_id = product.product_id
+WHERE order_date >= '01.01.2019'
+  AND "order".address = 'Brno'
+    AND EXISTS (SELECT *
+                FROM payment
+                WHERE payment.order_id = "order".order_id)
+GROUP BY user_id, "order".order_id
+ORDER BY order_price DESC;
+
 --  jeden dotaz obsahující predikát EXISTS
 -- show users who ordered in the year 2023
 SELECT login, first_name, last_name, email
