@@ -129,6 +129,7 @@ call create_order('Brno', '01.01.2023', 1);
 call create_order('Prague', '03.05.2023', 1);
 call create_order('Prague', '01.01.2023', 2);
 call create_order('Brno', '01.01.2020', 1);
+call create_order('Brno', '01.01.2019', 1);
 
 create or replace procedure change_order_state(
     ins_order_id int,
@@ -245,6 +246,8 @@ call add_product_to_order('The Hitchhiking Guide to Galaxy', 2, 3);
 call add_product_to_order('National Geographic', 3, 1);
 call add_product_to_order('Lord of the Rings', 3, 2);
 
+call add_product_to_order('Harry Potter', 5, 1);
+call add_product_to_order('Lord of the Rings', 5, 2);
 CREATE TABLE payment
 (
     payment_id   INT GENERATED ALWAYS AS IDENTITY NOT NULL PRIMARY KEY,
@@ -270,6 +273,7 @@ end;
 -- add a payment for the order
 call create_payment(2, 1, 350, '03.05.2023');
 call create_payment(2, 1, 350, '03.05.2023');
+call create_payment(5, 1, 500, '03.05.2023');
 
 call change_order_state(1, 'shipped');
 call change_order_state(2, 'shipped');
