@@ -265,7 +265,13 @@ create or replace procedure create_payment(
     ins_sum float,
     ins_payment_date date
 ) as
+    ORDERCOUNT INT;
 begin
+-- check if order exists before create payment
+    SELECT COUNT(*) into ORDERCOUNT FROM "order" WHERE order_id = ins_order_id;
+    IF ORDERCOUNT = 0 THEN
+        raise_application_error(-20000, 'Order does not exist');
+    END IF;
     INSERT INTO payment (order_id, user_id, sum, payment_date)
     VALUES (ins_order_id, ins_user_id, ins_sum, ins_payment_date);
 end;
