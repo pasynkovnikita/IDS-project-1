@@ -1,11 +1,11 @@
 -- DROP TABLE "user" CASCADE CONSTRAINTS;
 -- DROP TABLE employee CASCADE CONSTRAINTS ;
 -- DROP TABLE registered_user CASCADE CONSTRAINTS;
--- DROP TABLE "order";
--- DROP TABLE category;
--- DROP TABLE product;
--- DROP TABLE contains;
--- DROP TABLE payment;
+-- DROP TABLE "order" CASCADE CONSTRAINTS;
+-- DROP TABLE category CASCADE CONSTRAINTS ;
+-- DROP TABLE product CASCADE CONSTRAINTS ;
+-- DROP TABLE contains CASCADE CONSTRAINTS;
+-- DROP TABLE payment CASCADE CONSTRAINTS;
 
 -- alter date because of some error with date input we could not solve
 ALTER SESSION SET NLS_DATE_FORMAT = 'dd.mm.yyyy';
@@ -86,11 +86,17 @@ begin
             ins_address);
 end;
 
-CALL create_registered_user('xpasyn00', 'qwerty12345', 'Nikita', 'Pasynkov', 'xpasyn00@fit.cz', '+420777777777',
+call create_registered_user('xpasyn00', 'qwerty12345', 'Nikita', 'Pasynkov', 'xpasyn00@fit.cz', '+420777777777',
                             'Brno');
 call create_registered_user('xmaroc00', '1235qwerty', 'Lena', 'Marochkina', 'xmaroc00@fit.cz', '+420774555555',
                             'Prague');
-CALL create_employee('John', 'Doe');
+call create_registered_user('xnovak00', '1235sdfghjk', 'Jan', 'Novak', 'jan.novak@gmail.com', '+420774555555',
+    'Brno');
+call create_registered_user('princ89', '79swfdghj', 'Petr', 'Princ', 'petr.pronc@mail.cz', '+420774555555',
+    'Prague');
+
+call create_employee('John', 'Doe');
+call create_employee('Nick', 'Kowalsky');
 
 CREATE TABLE "order"
 (
@@ -130,6 +136,11 @@ call create_order('Prague', '03.05.2023', 1);
 call create_order('Prague', '01.01.2023', 2);
 call create_order('Brno', '01.01.2020', 1);
 call create_order('Brno', '01.01.2019', 1);
+call create_order('Olomouc', '01.01.2023', 1);
+call create_order('Brno', '01.01.2020', 3);
+call create_order('Praha', '01.08.2023', 3);
+call create_order('Brno', '01.01.2023', 4);
+call create_order('Pardubice', '01.01.2023', 4);
 
 create or replace procedure change_order_state(
     ins_order_id int,
@@ -162,6 +173,9 @@ end;
 
 call create_category('magazines');
 call create_category('foreign-books');
+call create_category('domestic-books');
+call create_category('culture');
+call create_category('sport');
 
 CREATE TABLE product
 (
@@ -209,8 +223,12 @@ end;
 call create_product('foreign-books', 'Harry Potter', 100, 10);
 call create_product('magazines', 'National Geographic', 50, 50);
 call create_product('foreign-books', 'Lord of the Rings', 200, 20);
-call create_product('classics', 'test', 200, 20);
+call create_product('classics', 'Smrt krasnych srncu', 200, 20);
 call create_product('foreign-books', 'The Hitchhiking Guide to Galaxy', 200, 20);
+call create_product('culture', 'Ancient Egypt', 500, 80);
+call create_product('culture', 'Ancient Greece', 400, 80);
+call create_product('sport', 'Football', 300, 10);
+call create_product('sport', 'Basketball', 200, 10);
 
 CREATE TABLE contains
 (
@@ -242,12 +260,24 @@ end;
 call add_product_to_order('Harry Potter', 1, 1);
 call add_product_to_order('Lord of the Rings', 1, 2);
 call add_product_to_order('The Hitchhiking Guide to Galaxy', 2, 3);
+call add_product_to_order('National Geographic', 2, 1);
+call add_product_to_order('Lord of the Rings', 2, 3);
 
 call add_product_to_order('National Geographic', 3, 1);
 call add_product_to_order('Lord of the Rings', 3, 2);
 
+call add_product_to_order('Ancient Egypt', 4, 2);
+call add_product_to_order('Ancient Greece', 4, 1);
+
 call add_product_to_order('Harry Potter', 5, 1);
 call add_product_to_order('Lord of the Rings', 5, 2);
+
+call add_product_to_order('Football', 6, 3);
+call add_product_to_order('Basketball', 7, 3);
+call add_product_to_order('Football', 8, 3);
+call add_product_to_order('Basketball', 9, 3);
+call add_product_to_order('Football', 10, 3);
+
 CREATE TABLE payment
 (
     payment_id   INT GENERATED ALWAYS AS IDENTITY NOT NULL PRIMARY KEY,
@@ -280,12 +310,18 @@ end;
 call create_payment(2, 1, 350, '03.05.2023');
 call create_payment(2, 1, 350, '03.05.2023');
 call create_payment(5, 1, 500, '03.05.2023');
+call create_payment(8, 1, 900, '03.05.2023');
+call create_payment(9, 1, 600, '03.05.2023');
+
 
 call change_order_state(1, 'shipped');
 call change_order_state(2, 'shipped');
+call change_order_state(5, 'shipped');
+call change_order_state(9, 'shipped');
 
 call change_order_state(3, 'cancelled');
 call change_order_state(4, 'cancelled');
+
 
 -- dva dotazy využívající spojení dvou tabulek
 
