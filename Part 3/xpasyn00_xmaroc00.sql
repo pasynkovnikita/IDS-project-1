@@ -91,9 +91,9 @@ call create_registered_user('xpasyn00', 'qwerty12345', 'Nikita', 'Pasynkov', 'xp
 call create_registered_user('xmaroc00', '1235qwerty', 'Lena', 'Marochkina', 'xmaroc00@fit.cz', '+420774555555',
                             'Prague');
 call create_registered_user('xnovak00', '1235sdfghjk', 'Jan', 'Novak', 'jan.novak@gmail.com', '+420774555555',
-    'Brno');
+                            'Brno');
 call create_registered_user('princ89', '79swfdghj', 'Petr', 'Princ', 'petr.pronc@mail.cz', '+420774555555',
-    'Prague');
+                            'Prague');
 
 call create_employee('John', 'Doe');
 call create_employee('Nick', 'Kowalsky');
@@ -314,7 +314,6 @@ call create_payment(8, 1, 900, '03.05.2023');
 call create_payment(9, 1, 600, '03.05.2023');
 
 
-call change_order_state(1, 'shipped');
 call change_order_state(2, 'shipped');
 call change_order_state(5, 'shipped');
 call change_order_state(9, 'shipped');
