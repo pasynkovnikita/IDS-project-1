@@ -328,9 +328,8 @@ call change_order_state(4, 'cancelled');
 
 
 -- dva dotazy využívající spojení dvou tabulek
-
 -- join product and category to show products and their categories
-SELECT product_name, product_price, product_count, category_name
+SELECT product_name, category_name, product_price, product_count
 FROM product
          LEFT JOIN category ON product.category_id = category.category_id;
 
@@ -345,10 +344,11 @@ WHERE registered_user.address = 'Brno';
 SELECT "order".order_id, product_name, product_count_ordered, product_price
 FROM "order"
          LEFT JOIN contains ON "order".order_id = contains.order_id
-         LEFT JOIN product ON contains.product_id = product.product_id;
+         LEFT JOIN product ON contains.product_id = product.product_id
+ORDER BY order_id;
 
 -- dva dotazy s klauzulí GROUP BY a agregační funkcí
--- show most popular products that were already ordered and delivered
+-- show most popular products that were shipped
 SELECT product_name, SUM(product_count_ordered) AS products_delivered
 FROM product
          LEFT JOIN contains ON product.product_id = contains.product_id
@@ -358,26 +358,26 @@ GROUP BY product_count_ordered, product_name
 ORDER BY product_count_ordered DESC;
 
 -- show users most expensive orders that were ordered and payed from Brno after 2019
-SELECT user_id, "order".order_id,  SUM(product_price * product_count_ordered) AS order_price
+SELECT user_id, "order".order_id, SUM(product_price * product_count_ordered) AS order_price
 FROM "order"
          LEFT JOIN contains ON "order".order_id = contains.order_id
          LEFT JOIN product ON contains.product_id = product.product_id
 WHERE order_date >= '01.01.2019'
   AND "order".address = 'Brno'
-    AND EXISTS (SELECT *
-                FROM payment
-                WHERE payment.order_id = "order".order_id)
+  AND EXISTS(SELECT *
+             FROM payment
+             WHERE payment.order_id = "order".order_id)
 GROUP BY user_id, "order".order_id
 ORDER BY order_price DESC;
 
 --  jeden dotaz obsahující predikát EXISTS
--- show users who ordered in the year 2023
+-- show users who ordered in the year 2020
 SELECT login, first_name, last_name, email
 FROM registered_user
-WHERE EXISTS (SELECT *
-              FROM "order"
-              WHERE "order".user_id = registered_user.user_id
-                AND EXTRACT(YEAR FROM order_date) = 2020);
+WHERE EXISTS(SELECT *
+             FROM "order"
+             WHERE "order".user_id = registered_user.user_id
+               AND EXTRACT(YEAR FROM order_date) = 2020);
 
 -- jeden dotaz s predikátem IN s vnořeným selectem (nikoliv IN s množinou konstantních dat)
 -- show users who ordered products from the category 'foreign-books'
