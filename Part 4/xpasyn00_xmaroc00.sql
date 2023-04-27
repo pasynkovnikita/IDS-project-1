@@ -302,13 +302,25 @@ begin
     IF ORDERCOUNT = 0 THEN
         raise_application_error(-20000, 'Order does not exist');
     END IF;
--- change order status to paid
-    UPDATE "order"
-    SET "order".status = 'paid'
-    WHERE order_id = ins_order_id;
 
     INSERT INTO payment (order_id, user_id, sum, payment_date)
     VALUES (ins_order_id, ins_user_id, ins_sum, ins_payment_date);
+end;
+
+-- trigger to change order status to paid after adding payment
+create or replace trigger update_order_status
+    before insert
+    on payment
+    for each row
+    enable
+declare
+    v_order_id number;
+begin
+    v_order_id := :new.order_id;
+
+    update "order"
+    set "order".status = 'paid'
+    where order_id = v_order_id;
 end;
 
 -- add a payment for the order
