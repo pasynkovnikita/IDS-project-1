@@ -30,15 +30,16 @@ CREATE TABLE employee
 
 CREATE TABLE registered_user
 (
-    user_id       INT          NOT NULL PRIMARY KEY,
-    login         VARCHAR(20)  NOT NULL,
-    password      VARCHAR(20)  NOT NULL,
-    first_name    VARCHAR(20)  NOT NULL,
-    last_name     VARCHAR(20)  NOT NULL,
-    date_of_birth DATE         NOT NULL,
-    email         VARCHAR(20)  NOT NULL,
-    phone_number  VARCHAR(20)  NOT NULL,
-    address       VARCHAR(256) NOT NULL,
+    user_id           INT          NOT NULL PRIMARY KEY,
+    login             VARCHAR(20)  NOT NULL,
+    password          VARCHAR(20)  NOT NULL,
+    first_name        VARCHAR(20)  NOT NULL,
+    last_name         VARCHAR(20)  NOT NULL,
+    date_of_birth     DATE         NOT NULL,
+    personal_discount INT DEFAULT (0) CHECK (personal_discount between 0 and 100)        NOT NULL,
+    email             VARCHAR(20)  NOT NULL,
+    phone_number      VARCHAR(20)  NOT NULL,
+    address           VARCHAR(256) NOT NULL,
 --     check if password is longer than 8 symbols and shorter than 20
     CONSTRAINT length_password CHECK (length(password) between 8 and 20),
 --     validate email
@@ -48,6 +49,106 @@ CREATE TABLE registered_user
     -- registered_user is a specialization of user
     CONSTRAINT FK_user_id FOREIGN KEY (user_id) REFERENCES "user" (user_id)
 );
+
+CREATE TABLE "order"
+(
+    order_id    INT GENERATED ALWAYS AS IDENTITY NOT NULL PRIMARY KEY,
+    address     VARCHAR(255)                     NOT NULL,
+    status      VARCHAR(20) DEFAULT ('created') CHECK (status IN ('created', 'paid', 'shipped', 'cancelled')),
+    order_date  DATE                             NOT NULL,
+    user_id     INT                              NOT NULL,
+    -- expeduje objednavku
+    employee_id INT                              NOT NULL,
+    CONSTRAINT FK_order_user_id FOREIGN KEY (user_id) REFERENCES registered_user,
+    CONSTRAINT FK_order_employee_id FOREIGN KEY (employee_id) REFERENCES employee
+);
+
+CREATE TABLE category
+(
+    category_id   INT GENERATED ALWAYS AS IDENTITY NOT NULL PRIMARY KEY,
+    category_name VARCHAR(255) UNIQUE              NOT NULL
+);
+
+CREATE TABLE product
+(
+    product_id    INT GENERATED ALWAYS AS IDENTITY NOT NULL PRIMARY KEY,
+    category_id   INT                              NOT NULL,
+    product_name  VARCHAR(255) UNIQUE              NOT NULL,
+    product_price FLOAT                            NOT NULL,
+    product_count INT                              NOT NULL,
+    CONSTRAINT FK_product_category_id FOREIGN KEY (category_id) REFERENCES category
+);
+
+CREATE TABLE contains
+(
+    product_id            INT NOT NULL,
+    order_id              INT NOT NULL,
+    product_count_ordered INT NOT NULL,
+    CONSTRAINT FK_product_id FOREIGN KEY (product_id) REFERENCES product (product_id),
+    CONSTRAINT FK_order_id FOREIGN KEY (order_id) REFERENCES "order" (order_id)
+);
+
+CREATE TABLE payment
+(
+    payment_id   INT GENERATED ALWAYS AS IDENTITY NOT NULL PRIMARY KEY,
+    order_id     INT                              NOT NULL,
+    user_id      INT                              NOT NULL,
+    sum          FLOAT                            NOT NULL,
+    payment_date DATE                             NOT NULL,
+    CONSTRAINT FK_payment_order FOREIGN KEY (order_id) REFERENCES "order",
+    CONSTRAINT FK_payment_user FOREIGN KEY (user_id) REFERENCES registered_user
+);
+
+create or replace trigger update_discount
+    before insert
+    on "order"
+    for each row
+    enable
+
+declare
+    v_order_id             number;
+    v_date_of_birth        date;
+
+begin
+    v_order_id := :new.order_id;
+
+    SELECT date_of_birth
+    into v_date_of_birth
+    FROM registered_user
+    WHERE user_id = :new.user_id;
+
+    --add a discount when month and day of birth is the same as order date
+    if extract(month from :new.order_date) = extract(month from v_date_of_birth)
+        and extract(day from :new.order_date) = extract(day from v_date_of_birth) then
+        update registered_user
+        set personal_discount = 5
+        where user_id = :new.user_id;
+    end if;
+
+    --add a discount when day and month of order date is the same as New Year's Eve
+    if extract(month from :new.order_date) = 12
+        and extract(day from :new.order_date) between 24 and 31 then
+        update registered_user
+        set personal_discount = 10
+        where user_id = :new.user_id;
+    end if;
+end;
+
+-- trigger to change order status to paid after adding payment
+create or replace trigger update_order_status
+    before insert
+    on payment
+    for each row
+    enable
+declare
+    v_order_id number;
+begin
+    v_order_id := :new.order_id;
+
+    update "order"
+    set "order".status = 'paid'
+    where order_id = v_order_id;
+end;
 
 -- procedure for creating an employee
 create or replace procedure create_employee(
@@ -90,35 +191,6 @@ begin
             ins_address);
 end;
 
-call create_registered_user('xpasyn00', 'qwerty12345', 'Nikita', 'Pasynkov', '03.10.2002', 'xpasyn00@fit.cz',
-                            '+420777777777',
-                            'Brno');
-call create_registered_user('xmaroc00', '1235qwerty', 'Lena', 'Marochkina', '21.07.2004', 'xmaroc00@fit.cz',
-                            '+420774555555',
-                            'Prague');
-call create_registered_user('xnovak00', '1235sdfghjk', 'Jan', 'Novak', '01.01.1954', 'jan.novak@gmail.com',
-                            '+420774555555',
-                            'Brno');
-call create_registered_user('princ89', '79swfdghj', 'Petr', 'Princ', '05.08.1995', 'petr.pronc@mail.cz',
-                            '+420774555555',
-                            'Prague');
-
-call create_employee('John', 'Doe');
-call create_employee('Nick', 'Kowalsky');
-
-CREATE TABLE "order"
-(
-    order_id    INT GENERATED ALWAYS AS IDENTITY NOT NULL PRIMARY KEY,
-    address     VARCHAR(255)                     NOT NULL,
-    status      VARCHAR(20) DEFAULT ('created') CHECK (status IN ('created', 'paid', 'shipped', 'cancelled')),
-    order_date  DATE                             NOT NULL,
-    user_id     INT                              NOT NULL,
-    -- expeduje objednavku
-    employee_id INT                              NOT NULL,
-    CONSTRAINT FK_order_user_id FOREIGN KEY (user_id) REFERENCES registered_user,
-    CONSTRAINT FK_order_employee_id FOREIGN KEY (employee_id) REFERENCES employee
-);
-
 -- procedure for creating order
 create or replace procedure create_order(
     ins_address varchar2,
@@ -138,19 +210,6 @@ begin
     VALUES (ins_address, ins_order_date, ins_user_id, random_employee_id);
 end;
 
--- add an order
-call create_order('Brno', '01.01.2023', 1);
-call create_order('Prague', '03.05.2023', 1);
-call create_order('Prague', '01.01.2023', 2);
-call create_order('Brno', '01.01.2020', 1);
-call create_order('Brno', '01.01.2019', 1);
-call create_order('Olomouc', '01.01.2023', 1);
-call create_order('Brno', '01.01.2020', 3);
-call create_order('Praha', '01.08.2023', 3);
-call create_order('Brno', '01.01.2023', 4);
-call create_order('Pardubice', '01.01.2023', 4);
-call create_order('Brno', '21.07.2023', 2);
-
 create or replace procedure change_order_state(
     ins_order_id int,
     ins_status varchar2
@@ -165,12 +224,6 @@ begin
     end if;
 end;
 
-CREATE TABLE category
-(
-    category_id   INT GENERATED ALWAYS AS IDENTITY NOT NULL PRIMARY KEY,
-    category_name VARCHAR(255) UNIQUE              NOT NULL
-);
-
 -- procedure for creating product category
 create or replace procedure create_category(
     ins_category_name varchar2
@@ -179,22 +232,6 @@ begin
     INSERT INTO category (category_name)
     VALUES (ins_category_name);
 end;
-
-call create_category('magazines');
-call create_category('foreign-books');
-call create_category('domestic-books');
-call create_category('culture');
-call create_category('sport');
-
-CREATE TABLE product
-(
-    product_id    INT GENERATED ALWAYS AS IDENTITY NOT NULL PRIMARY KEY,
-    category_id   INT                              NOT NULL,
-    product_name  VARCHAR(255) UNIQUE              NOT NULL,
-    product_price FLOAT                            NOT NULL,
-    product_count INT                              NOT NULL,
-    CONSTRAINT FK_product_category_id FOREIGN KEY (category_id) REFERENCES category
-);
 
 create or replace procedure create_product(
     ins_category_name varchar2,
@@ -228,26 +265,6 @@ begin
 
 end;
 
--- add products
-call create_product('foreign-books', 'Harry Potter', 100, 10);
-call create_product('magazines', 'National Geographic', 50, 50);
-call create_product('foreign-books', 'Lord of the Rings', 200, 20);
-call create_product('classics', 'Smrt krasnych srncu', 200, 20);
-call create_product('foreign-books', 'The Hitchhiking Guide to Galaxy', 200, 20);
-call create_product('culture', 'Ancient Egypt', 500, 80);
-call create_product('culture', 'Ancient Greece', 400, 80);
-call create_product('sport', 'Football', 300, 10);
-call create_product('sport', 'Basketball', 200, 10);
-
-CREATE TABLE contains
-(
-    product_id            INT NOT NULL,
-    order_id              INT NOT NULL,
-    product_count_ordered INT NOT NULL,
-    CONSTRAINT FK_product_id FOREIGN KEY (product_id) REFERENCES product (product_id),
-    CONSTRAINT FK_order_id FOREIGN KEY (order_id) REFERENCES "order" (order_id)
-);
-
 create or replace procedure add_product_to_order(
     ins_product_name varchar2,
     ins_order_id int,
@@ -265,37 +282,78 @@ begin
 
 end;
 
-create or replace trigger update_contains_birthday_gift
-    after insert
-    on "order"
-    for each row
-    enable
-declare
-    v_order_id      int;
-    v_date_of_birth date;
-    v_unpopular_product_id int;
+create or replace procedure create_payment(
+    ins_order_id int,
+    ins_user_id int,
+    ins_sum float,
+    ins_payment_date date
+) as
+    ORDERCOUNT INT;
 begin
-    v_order_id := :new.order_id;
+    -- check if order exists before create payment
+    SELECT COUNT(*) into ORDERCOUNT FROM "order" WHERE order_id = ins_order_id;
+    IF ORDERCOUNT = 0 THEN
+        raise_application_error(-20000, 'Order does not exist');
+    END IF;
 
-    SELECT date_of_birth
-    into v_date_of_birth
-    FROM registered_user
-    WHERE user_id = :new.user_id;
-
-    SELECT product_id into v_unpopular_product_id
-    FROM (SELECT product_id, SUM(product_count_ordered) AS products_delivered
-          FROM contains
-          GROUP BY product_count_ordered, product_id
-              FETCH FIRST 1 ROW ONLY);
-
-    --add a gift when month and day of birth is the same as order date
-    if extract(month from :new.order_date) = extract(month from v_date_of_birth)
-        and extract(day from :new.order_date) = extract(day from v_date_of_birth) then
-        INSERT INTO contains VALUES (v_unpopular_product_id, v_order_id, 1);
-    end if;
+    INSERT INTO payment (order_id, user_id, sum, payment_date)
+    VALUES (ins_order_id, ins_user_id, ins_sum, ins_payment_date);
 end;
 
+call create_registered_user('xpasyn00', 'qwerty12345', 'Nikita', 'Pasynkov', '03.10.2002', 'xpasyn00@fit.cz',
+                            '+420777777777',
+                            'Brno');
+call create_registered_user('xmaroc00', '1235qwerty', 'Lena', 'Marochkina', '21.07.2004', 'xmaroc00@fit.cz',
+                            '+420774555555',
+                            'Prague');
+call create_registered_user('xnovak00', '1235sdfghjk', 'Jan', 'Novak', '01.01.1954', 'jan.novak@gmail.com',
+                            '+420774555555',
+                            'Brno');
+call create_registered_user('princ89', '79swfdghj', 'Petr', 'Princ', '05.08.1995', 'petr.pronc@mail.cz',
+                            '+420774555555',
+                            'Prague');
+
+call create_employee('John', 'Doe');
+call create_employee('Nick', 'Kowalsky');
+
+-- add an order
+insert into "order" (address, order_date, user_id, employee_id)
+values ('Brno', '01.01.2023', 1, 5);
+select *
+from "order";
+
+call create_order('Brno', '25.12.2023', 1);
+call create_order('Prague', '03.05.2023', 1);
+call create_order('Prague', '01.01.2023', 2);
+call create_order('Brno', '01.01.2020', 1);
+call create_order('Brno', '01.01.2019', 1);
+call create_order('Olomouc', '01.01.2023', 1);
+call create_order('Brno', '01.01.2020', 3);
+call create_order('Praha', '01.08.2023', 3);
+call create_order('Brno', '01.01.2023', 4);
+call create_order('Pardubice', '01.01.2023', 4);
+call create_order('Brno', '21.07.2023', 2);
+
+call create_category('magazines');
+call create_category('foreign-books');
+call create_category('domestic-books');
+call create_category('culture');
+call create_category('sport');
+
+-- add products
+call create_product('foreign-books', 'Harry Potter', 100, 10);
+call create_product('magazines', 'National Geographic', 50, 50);
+call create_product('foreign-books', 'Lord of the Rings', 200, 20);
+call create_product('classics', 'Smrt krasnych srncu', 200, 20);
+call create_product('foreign-books', 'The Hitchhiking Guide to Galaxy', 200, 20);
+call create_product('culture', 'Ancient Egypt', 500, 80);
+call create_product('culture', 'Ancient Greece', 400, 80);
+call create_product('sport', 'Football', 300, 10);
+call create_product('sport', 'Basketball', 200, 10);
+
 -- contain table to link order and products
+insert into contains (product_id, order_id, product_count_ordered)
+values (1, 1, 1);
 call add_product_to_order('Harry Potter', 1, 1);
 call add_product_to_order('Lord of the Rings', 1, 2);
 call add_product_to_order('The Hitchhiking Guide to Galaxy', 2, 3);
@@ -317,51 +375,6 @@ call add_product_to_order('Football', 8, 3);
 call add_product_to_order('Basketball', 9, 3);
 call add_product_to_order('Football', 10, 3);
 
-CREATE TABLE payment
-(
-    payment_id   INT GENERATED ALWAYS AS IDENTITY NOT NULL PRIMARY KEY,
-    order_id     INT                              NOT NULL,
-    user_id      INT                              NOT NULL,
-    sum          FLOAT                            NOT NULL,
-    payment_date DATE                             NOT NULL,
-    CONSTRAINT FK_payment_order FOREIGN KEY (order_id) REFERENCES "order",
-    CONSTRAINT FK_payment_user FOREIGN KEY (user_id) REFERENCES registered_user
-);
-
-create or replace procedure create_payment(
-    ins_order_id int,
-    ins_user_id int,
-    ins_sum float,
-    ins_payment_date date
-) as
-    ORDERCOUNT INT;
-begin
-    -- check if order exists before create payment
-    SELECT COUNT(*) into ORDERCOUNT FROM "order" WHERE order_id = ins_order_id;
-    IF ORDERCOUNT = 0 THEN
-        raise_application_error(-20000, 'Order does not exist');
-    END IF;
-
-    INSERT INTO payment (order_id, user_id, sum, payment_date)
-    VALUES (ins_order_id, ins_user_id, ins_sum, ins_payment_date);
-end;
-
--- trigger to change order status to paid after adding payment
-create or replace trigger update_order_status
-    before insert
-    on payment
-    for each row
-    enable
-declare
-    v_order_id number;
-begin
-    v_order_id := :new.order_id;
-
-    update "order"
-    set "order".status = 'paid'
-    where order_id = v_order_id;
-end;
-
 -- add a payment for the order
 call create_payment(2, 1, 350, '03.05.2023');
 call create_payment(2, 1, 350, '03.05.2023');
@@ -376,7 +389,6 @@ call change_order_state(9, 'shipped');
 
 call change_order_state(3, 'cancelled');
 call change_order_state(4, 'cancelled');
-
 
 -- dva dotazy využívající spojení dvou tabulek
 -- join product and category to show products and their categories
