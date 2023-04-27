@@ -30,14 +30,15 @@ CREATE TABLE employee
 
 CREATE TABLE registered_user
 (
-    user_id      INT          NOT NULL PRIMARY KEY,
-    login        VARCHAR(20)  NOT NULL,
-    password     VARCHAR(20)  NOT NULL,
-    first_name   VARCHAR(20)  NOT NULL,
-    last_name    VARCHAR(20)  NOT NULL,
-    email        VARCHAR(20)  NOT NULL,
-    phone_number VARCHAR(20)  NOT NULL,
-    address      VARCHAR(256) NOT NULL,
+    user_id       INT          NOT NULL PRIMARY KEY,
+    login         VARCHAR(20)  NOT NULL,
+    password      VARCHAR(20)  NOT NULL,
+    first_name    VARCHAR(20)  NOT NULL,
+    last_name     VARCHAR(20)  NOT NULL,
+    date_of_birth DATE         NOT NULL,
+    email         VARCHAR(20)  NOT NULL,
+    phone_number  VARCHAR(20)  NOT NULL,
+    address       VARCHAR(256) NOT NULL,
 --     check if password is longer than 8 symbols and shorter than 20
     CONSTRAINT length_password CHECK (length(password) between 8 and 20),
 --     validate email
@@ -70,6 +71,7 @@ create or replace procedure create_registered_user(
     ins_password varchar2,
     ins_first_name varchar2,
     ins_last_name varchar2,
+    ins_date_of_birth date,
     ins_email varchar2,
     ins_phone_number varchar2,
     ins_address varchar2
@@ -81,18 +83,24 @@ begin
     VALUES ('registered_user')
     RETURNING user_id INTO genUserId;
 
-    INSERT INTO registered_user (user_id, login, password, first_name, last_name, email, phone_number, address)
-    VALUES (genUserId, ins_login, ins_password, ins_first_name, ins_last_name, ins_email, ins_phone_number,
+    INSERT INTO registered_user (user_id, login, password, first_name, last_name, date_of_birth, email, phone_number,
+                                 address)
+    VALUES (genUserId, ins_login, ins_password, ins_first_name, ins_last_name, ins_date_of_birth, ins_email,
+            ins_phone_number,
             ins_address);
 end;
 
-call create_registered_user('xpasyn00', 'qwerty12345', 'Nikita', 'Pasynkov', 'xpasyn00@fit.cz', '+420777777777',
+call create_registered_user('xpasyn00', 'qwerty12345', 'Nikita', 'Pasynkov', '03.10.2002', 'xpasyn00@fit.cz',
+                            '+420777777777',
                             'Brno');
-call create_registered_user('xmaroc00', '1235qwerty', 'Lena', 'Marochkina', 'xmaroc00@fit.cz', '+420774555555',
+call create_registered_user('xmaroc00', '1235qwerty', 'Lena', 'Marochkina', '21.07.2004', 'xmaroc00@fit.cz',
+                            '+420774555555',
                             'Prague');
-call create_registered_user('xnovak00', '1235sdfghjk', 'Jan', 'Novak', 'jan.novak@gmail.com', '+420774555555',
+call create_registered_user('xnovak00', '1235sdfghjk', 'Jan', 'Novak', '01.01.1954', 'jan.novak@gmail.com',
+                            '+420774555555',
                             'Brno');
-call create_registered_user('princ89', '79swfdghj', 'Petr', 'Princ', 'petr.pronc@mail.cz', '+420774555555',
+call create_registered_user('princ89', '79swfdghj', 'Petr', 'Princ', '05.08.1995', 'petr.pronc@mail.cz',
+                            '+420774555555',
                             'Prague');
 
 call create_employee('John', 'Doe');
@@ -141,6 +149,7 @@ call create_order('Brno', '01.01.2020', 3);
 call create_order('Praha', '01.08.2023', 3);
 call create_order('Brno', '01.01.2023', 4);
 call create_order('Pardubice', '01.01.2023', 4);
+call create_order('Brno', '21.07.2023', 2);
 
 create or replace procedure change_order_state(
     ins_order_id int,
@@ -256,6 +265,36 @@ begin
 
 end;
 
+create or replace trigger update_contains_birthday_gift
+    after insert
+    on "order"
+    for each row
+    enable
+declare
+    v_order_id      int;
+    v_date_of_birth date;
+    v_unpopular_product_id int;
+begin
+    v_order_id := :new.order_id;
+
+    SELECT date_of_birth
+    into v_date_of_birth
+    FROM registered_user
+    WHERE user_id = :new.user_id;
+
+    SELECT product_id into v_unpopular_product_id
+    FROM (SELECT product_id, SUM(product_count_ordered) AS products_delivered
+          FROM contains
+          GROUP BY product_count_ordered, product_id
+              FETCH FIRST 1 ROW ONLY);
+
+    --add a gift when month and day of birth is the same as order date
+    if extract(month from :new.order_date) = extract(month from v_date_of_birth)
+        and extract(day from :new.order_date) = extract(day from v_date_of_birth) then
+        INSERT INTO contains VALUES (v_unpopular_product_id, v_order_id, 1);
+    end if;
+end;
+
 -- contain table to link order and products
 call add_product_to_order('Harry Potter', 1, 1);
 call add_product_to_order('Lord of the Rings', 1, 2);
@@ -329,7 +368,7 @@ call create_payment(2, 1, 350, '03.05.2023');
 call create_payment(5, 1, 500, '03.05.2023');
 call create_payment(8, 1, 900, '03.05.2023');
 call create_payment(9, 1, 600, '03.05.2023');
-
+call create_payment(11, 2, 200, '21.07.2023');
 
 call change_order_state(2, 'shipped');
 call change_order_state(5, 'shipped');
