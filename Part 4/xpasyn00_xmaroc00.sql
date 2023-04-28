@@ -36,7 +36,6 @@ CREATE TABLE registered_user
     first_name        VARCHAR(20)  NOT NULL,
     last_name         VARCHAR(20)  NOT NULL,
     date_of_birth     DATE         NOT NULL,
-    personal_discount INT DEFAULT (0) CHECK (personal_discount between 0 and 100)        NOT NULL,
     email             VARCHAR(20)  NOT NULL,
     phone_number      VARCHAR(20)  NOT NULL,
     address           VARCHAR(256) NOT NULL,
@@ -99,39 +98,25 @@ CREATE TABLE payment
     CONSTRAINT FK_payment_user FOREIGN KEY (user_id) REFERENCES registered_user
 );
 
-create or replace trigger update_discount
-    before insert
-    on "order"
+--trigger to change product count after order is created
+create or replace trigger update_product_count
+    after insert
+    on contains
     for each row
     enable
-
 declare
-    v_order_id             number;
-    v_date_of_birth        date;
-
+    v_product_id number;
+    v_product_count number;
+    v_product_count_ordered number;
 begin
-    v_order_id := :new.order_id;
+    v_product_id := :new.product_id;
+    v_product_count_ordered := :new.product_count_ordered;
 
-    SELECT date_of_birth
-    into v_date_of_birth
-    FROM registered_user
-    WHERE user_id = :new.user_id;
+    select product_count into v_product_count from product where product_id = v_product_id;
 
-    --add a discount when month and day of birth is the same as order date
-    if extract(month from :new.order_date) = extract(month from v_date_of_birth)
-        and extract(day from :new.order_date) = extract(day from v_date_of_birth) then
-        update registered_user
-        set personal_discount = 5
-        where user_id = :new.user_id;
-    end if;
-
-    --add a discount when day and month of order date is the same as New Year's Eve
-    if extract(month from :new.order_date) = 12
-        and extract(day from :new.order_date) between 24 and 31 then
-        update registered_user
-        set personal_discount = 10
-        where user_id = :new.user_id;
-    end if;
+    update product
+    set product_count = v_product_count - v_product_count_ordered
+    where product_id = v_product_id;
 end;
 
 -- trigger to change order status to paid after adding payment
@@ -317,11 +302,6 @@ call create_employee('John', 'Doe');
 call create_employee('Nick', 'Kowalsky');
 
 -- add an order
-insert into "order" (address, order_date, user_id, employee_id)
-values ('Brno', '01.01.2023', 1, 5);
-select *
-from "order";
-
 call create_order('Brno', '25.12.2023', 1);
 call create_order('Prague', '03.05.2023', 1);
 call create_order('Prague', '01.01.2023', 2);
@@ -352,8 +332,6 @@ call create_product('sport', 'Football', 300, 10);
 call create_product('sport', 'Basketball', 200, 10);
 
 -- contain table to link order and products
-insert into contains (product_id, order_id, product_count_ordered)
-values (1, 1, 1);
 call add_product_to_order('Harry Potter', 1, 1);
 call add_product_to_order('Lord of the Rings', 1, 2);
 call add_product_to_order('The Hitchhiking Guide to Galaxy', 2, 3);
