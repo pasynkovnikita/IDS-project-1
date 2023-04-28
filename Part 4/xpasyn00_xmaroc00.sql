@@ -30,15 +30,15 @@ CREATE TABLE employee
 
 CREATE TABLE registered_user
 (
-    user_id           INT          NOT NULL PRIMARY KEY,
-    login             VARCHAR(20)  NOT NULL,
-    password          VARCHAR(20)  NOT NULL,
-    first_name        VARCHAR(20)  NOT NULL,
-    last_name         VARCHAR(20)  NOT NULL,
-    date_of_birth     DATE         NOT NULL,
-    email             VARCHAR(20)  NOT NULL,
-    phone_number      VARCHAR(20)  NOT NULL,
-    address           VARCHAR(256) NOT NULL,
+    user_id       INT          NOT NULL PRIMARY KEY,
+    login         VARCHAR(20)  NOT NULL,
+    password      VARCHAR(20)  NOT NULL,
+    first_name    VARCHAR(20)  NOT NULL,
+    last_name     VARCHAR(20)  NOT NULL,
+    date_of_birth DATE         NOT NULL,
+    email         VARCHAR(20)  NOT NULL,
+    phone_number  VARCHAR(20)  NOT NULL,
+    address       VARCHAR(256) NOT NULL,
 --     check if password is longer than 8 symbols and shorter than 20
     CONSTRAINT length_password CHECK (length(password) between 8 and 20),
 --     validate email
@@ -105,8 +105,8 @@ create or replace trigger update_product_count
     for each row
     enable
 declare
-    v_product_id number;
-    v_product_count number;
+    v_product_id            number;
+    v_product_count         number;
     v_product_count_ordered number;
 begin
     v_product_id := :new.product_id;
@@ -270,7 +270,6 @@ end;
 create or replace procedure create_payment(
     ins_order_id int,
     ins_user_id int,
-    ins_sum float,
     ins_payment_date date
 ) as
     ORDERCOUNT INT;
@@ -281,9 +280,26 @@ begin
         raise_application_error(-20000, 'Order does not exist');
     END IF;
 
-    INSERT INTO payment (order_id, user_id, sum, payment_date)
-    VALUES (ins_order_id, ins_user_id, ins_sum, ins_payment_date);
+    -- add cursor to calculate sum of order from contains table
+    DECLARE
+        v_sum product.product_price%TYPE;
+        CURSOR c1 IS
+            SELECT product_price * product_count_ordered AS v_sum
+            FROM contains
+                     JOIN product p on contains.product_id = p.product_id
+            WHERE order_id = ins_order_id;
+    BEGIN
+        v_sum := 0;
+        FOR c1rec IN c1 LOOP
+            v_sum := v_sum + c1rec.v_sum;
+        END LOOP;
+
+        INSERT INTO payment (order_id, user_id, sum, payment_date)
+        VALUES (ins_order_id, ins_user_id, v_sum, ins_payment_date);
+    end;
+
 end;
+
 
 call create_registered_user('xpasyn00', 'qwerty12345', 'Nikita', 'Pasynkov', '03.10.2002', 'xpasyn00@fit.cz',
                             '+420777777777',
@@ -352,14 +368,15 @@ call add_product_to_order('Basketball', 7, 3);
 call add_product_to_order('Football', 8, 3);
 call add_product_to_order('Basketball', 9, 3);
 call add_product_to_order('Football', 10, 3);
+call add_product_to_order('Harry Potter', 11, 1);
 
 -- add a payment for the order
-call create_payment(2, 1, 350, '03.05.2023');
-call create_payment(2, 1, 350, '03.05.2023');
-call create_payment(5, 1, 500, '03.05.2023');
-call create_payment(8, 1, 900, '03.05.2023');
-call create_payment(9, 1, 600, '03.05.2023');
-call create_payment(11, 2, 200, '21.07.2023');
+call create_payment(2, 1, '03.05.2023');
+call create_payment(2, 1, '03.05.2023');
+call create_payment(5, 1, '03.05.2023');
+call create_payment(8, 1, '03.05.2023');
+call create_payment(9, 1, '03.05.2023');
+call create_payment(11, 2, '21.07.2023');
 
 call change_order_state(2, 'shipped');
 call change_order_state(5, 'shipped');
