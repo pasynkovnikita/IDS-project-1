@@ -328,8 +328,8 @@ create or replace procedure get_products_popularity(
         where o.order_date between ins_start_date and ins_end_date
         group by product_name
         order by product_count_ordered desc;
-    v_product_name          varchar2(100);
-    v_product_count_ordered int;
+    v_product_name          product.product_name%type;
+    v_product_count_ordered contains.product_count_ordered%type;
 
 begin
     open c1;
