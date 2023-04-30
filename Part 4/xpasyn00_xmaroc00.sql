@@ -1,11 +1,11 @@
--- DROP TABLE "user" CASCADE CONSTRAINTS;
--- DROP TABLE employee CASCADE CONSTRAINTS ;
--- DROP TABLE registered_user CASCADE CONSTRAINTS;
--- DROP TABLE "order" CASCADE CONSTRAINTS;
--- DROP TABLE category CASCADE CONSTRAINTS ;
--- DROP TABLE product CASCADE CONSTRAINTS ;
--- DROP TABLE contains CASCADE CONSTRAINTS;
--- DROP TABLE payment CASCADE CONSTRAINTS;
+DROP TABLE "user" CASCADE CONSTRAINTS;
+DROP TABLE employee CASCADE CONSTRAINTS;
+DROP TABLE registered_user CASCADE CONSTRAINTS;
+DROP TABLE "order" CASCADE CONSTRAINTS;
+DROP TABLE category CASCADE CONSTRAINTS;
+DROP TABLE product CASCADE CONSTRAINTS;
+DROP TABLE contains CASCADE CONSTRAINTS;
+DROP TABLE payment CASCADE CONSTRAINTS;
 
 -- alter date because of some error with date input we could not solve
 ALTER SESSION SET NLS_DATE_FORMAT = 'dd.mm.yyyy';
@@ -284,6 +284,54 @@ begin
     INSERT INTO payment (order_id, user_id, sum, payment_date)
     VALUES (ins_order_id, ins_user_id, ins_sum, ins_payment_date);
 end;
+
+-- view for getting all products ordered by users
+create or replace view products_ordered_by_users as
+select product_name, sum(product_count_ordered) as product_count_ordered
+from contains
+         join "order" o on contains.order_id = o.order_id
+         join product p on contains.product_id = p.product_id
+where o.status = 'paid'
+   or o.status = 'shipped'
+group by product_name
+order by product_count_ordered desc;
+
+select *
+from products_ordered_by_users;
+
+-- procedure to get products popularity using cursor
+-- will show a table with product name and number of products ordered and shipped between two dates
+create or replace procedure get_products_popularity(
+    ins_start_date date,
+    ins_end_date date
+) as
+    cursor c1 is
+        select product_name, sum(product_count_ordered) as product_count_ordered
+        from contains
+                 join "order" o on contains.order_id = o.order_id
+                 join product p on contains.product_id = p.product_id
+        where o.order_date between ins_start_date and ins_end_date
+        group by product_name
+        order by product_count_ordered desc;
+    v_product_name          product.product_name%type;
+    v_product_count_ordered contains.product_count_ordered%type;
+
+begin
+    open c1;
+    DBMS_OUTPUT.PUT_LINE('Products popularity between ' || ins_start_date || ' and ' || ins_end_date);
+    dbms_output.put_line('Product name | Product count ordered');
+    dbms_output.put_line('---------------------------------');
+    loop
+        fetch c1 into v_product_name, v_product_count_ordered;
+        exit when c1%notfound;
+        dbms_output.put_line(v_product_name || ' | ' || v_product_count_ordered);
+    end loop;
+    close c1;
+end;
+
+call get_products_popularity('01.01.2020', '01.01.2023');
+
+call get_products_popularity('01.01.2020', '01.01.2023');
 
 call create_registered_user('xpasyn00', 'qwerty12345', 'Nikita', 'Pasynkov', '03.10.2002', 'xpasyn00@fit.cz',
                             '+420777777777',
