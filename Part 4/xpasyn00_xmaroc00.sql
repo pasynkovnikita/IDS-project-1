@@ -447,6 +447,7 @@ GROUP BY product_count_ordered, product_name
 ORDER BY product_count_ordered DESC;
 
 -- show users most expensive orders that were ordered and payed from Brno after 2019
+EXPLAIN PLAN FOR
 SELECT user_id, "order".order_id, SUM(product_price * product_count_ordered) AS order_price
 FROM "order"
          LEFT JOIN contains ON "order".order_id = contains.order_id
@@ -458,6 +459,11 @@ WHERE order_date >= '01.01.2019'
              WHERE payment.order_id = "order".order_id)
 GROUP BY user_id, "order".order_id
 ORDER BY order_price DESC;
+-- output plan
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
+-- create index for the query
+CREATE INDEX order_id ON "order"(order_date);
+CREATE INDEX product_price ON product(product_price);
 
 --  jeden dotaz obsahující predikát EXISTS
 -- show users who ordered in the year 2020
