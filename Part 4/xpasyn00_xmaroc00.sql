@@ -1,11 +1,11 @@
--- DROP TABLE "user" CASCADE CONSTRAINTS;
--- DROP TABLE employee CASCADE CONSTRAINTS ;
--- DROP TABLE registered_user CASCADE CONSTRAINTS;
--- DROP TABLE "order" CASCADE CONSTRAINTS;
--- DROP TABLE category CASCADE CONSTRAINTS ;
--- DROP TABLE product CASCADE CONSTRAINTS ;
--- DROP TABLE contains CASCADE CONSTRAINTS;
--- DROP TABLE payment CASCADE CONSTRAINTS;
+DROP TABLE "user" CASCADE CONSTRAINTS;
+DROP TABLE employee CASCADE CONSTRAINTS;
+DROP TABLE registered_user CASCADE CONSTRAINTS;
+DROP TABLE "order" CASCADE CONSTRAINTS;
+DROP TABLE category CASCADE CONSTRAINTS;
+DROP TABLE product CASCADE CONSTRAINTS;
+DROP TABLE contains CASCADE CONSTRAINTS;
+DROP TABLE payment CASCADE CONSTRAINTS;
 
 -- alter date because of some error with date input we could not solve
 ALTER SESSION SET NLS_DATE_FORMAT = 'dd.mm.yyyy';
@@ -30,16 +30,16 @@ CREATE TABLE employee
 
 CREATE TABLE registered_user
 (
-    user_id           INT          NOT NULL PRIMARY KEY,
-    login             VARCHAR(20)  NOT NULL,
-    password          VARCHAR(20)  NOT NULL,
-    first_name        VARCHAR(20)  NOT NULL,
-    last_name         VARCHAR(20)  NOT NULL,
-    date_of_birth     DATE         NOT NULL,
-    personal_discount INT DEFAULT (0) CHECK (personal_discount between 0 and 100)        NOT NULL,
-    email             VARCHAR(20)  NOT NULL,
-    phone_number      VARCHAR(20)  NOT NULL,
-    address           VARCHAR(256) NOT NULL,
+    user_id           INT                                                         NOT NULL PRIMARY KEY,
+    login             VARCHAR(20)                                                 NOT NULL,
+    password          VARCHAR(20)                                                 NOT NULL,
+    first_name        VARCHAR(20)                                                 NOT NULL,
+    last_name         VARCHAR(20)                                                 NOT NULL,
+    date_of_birth     DATE                                                        NOT NULL,
+    personal_discount INT DEFAULT (0) CHECK (personal_discount between 0 and 100) NOT NULL,
+    email             VARCHAR(20)                                                 NOT NULL,
+    phone_number      VARCHAR(20)                                                 NOT NULL,
+    address           VARCHAR(256)                                                NOT NULL,
 --     check if password is longer than 8 symbols and shorter than 20
     CONSTRAINT length_password CHECK (length(password) between 8 and 20),
 --     validate email
@@ -106,8 +106,8 @@ create or replace trigger update_discount
     enable
 
 declare
-    v_order_id             number;
-    v_date_of_birth        date;
+    v_order_id      number;
+    v_date_of_birth date;
 
 begin
     v_order_id := :new.order_id;
@@ -343,6 +343,8 @@ begin
     end loop;
     close c1;
 end;
+
+call get_products_popularity('01.01.2020', '01.01.2023');
 
 call get_products_popularity('01.01.2020', '01.01.2023');
 
