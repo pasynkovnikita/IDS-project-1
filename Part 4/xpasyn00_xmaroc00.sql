@@ -375,15 +375,25 @@ call create_payment(2, 1, '03.05.2023');
 call create_payment(2, 1, '03.05.2023');
 call create_payment(5, 1, '03.05.2023');
 call create_payment(8, 1, '03.05.2023');
-call create_payment(9, 1, '03.05.2023');
 call create_payment(11, 2, '21.07.2023');
 
 call change_order_state(2, 'shipped');
 call change_order_state(5, 'shipped');
-call change_order_state(9, 'shipped');
 
 call change_order_state(3, 'cancelled');
 call change_order_state(4, 'cancelled');
+
+
+-- show how the trigger update_order_status works
+SELECT * FROM "order";
+call create_payment(9, 1, '03.05.2023');
+SELECT * FROM "order";
+
+-- show how the trigger update_order_status works
+SELECT * FROM product;
+call create_order ('Brno', '01.01.2023', 1);
+call add_product_to_order('Harry Potter', 12, 1);
+SELECT * FROM product;
 
 -- dva dotazy využívající spojení dvou tabulek
 -- join product and category to show products and their categories
@@ -447,4 +457,3 @@ WHERE user_id IN (SELECT user_id
                            LEFT JOIN product ON contains.product_id = product.product_id
                            LEFT JOIN category ON product.category_id = category.category_id
                   WHERE category_name = 'foreign-books');
-
