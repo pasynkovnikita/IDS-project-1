@@ -329,10 +329,6 @@ begin
     close c1;
 end;
 
-call get_products_popularity('01.01.2020', '01.01.2023');
-
-call get_products_popularity('01.01.2020', '01.01.2023');
-
 call create_registered_user('xpasyn00', 'qwerty12345', 'Nikita', 'Pasynkov', '03.10.2002', 'xpasyn00@fit.cz',
                             '+420777777777',
                             'Brno');
@@ -417,6 +413,7 @@ call change_order_state(3, 'cancelled');
 call change_order_state(4, 'cancelled');
 
 ---- PART 4 -----
+-- usage of index and explain plan to show the difference
 -- show users most expensive orders that were ordered and payed from Brno after 2019
 EXPLAIN PLAN FOR
 SELECT user_id, "order".order_id, SUM(product_price * product_count_ordered) AS order_price
@@ -449,4 +446,7 @@ WHERE order_date >= '01.01.2019'
 GROUP BY user_id, "order".order_id
 ORDER BY order_price DESC;
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
+
+-- show usage of procedure with cursor
+call get_products_popularity('01.01.2020', '01.01.2023');
 
