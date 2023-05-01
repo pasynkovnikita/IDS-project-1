@@ -433,26 +433,20 @@ ORDER BY order_price DESC;
 -- output plan
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
 -- create index for the query
-CREATE INDEX order_id ON "order"(order_date);
-CREATE INDEX product_price ON product(product_price);
-
---  jeden dotaz obsahující predikát EXISTS
--- show users who ordered in the year 2020
-SELECT login, first_name, last_name, email
-FROM registered_user
-WHERE EXISTS(SELECT *
-             FROM "order"
-             WHERE "order".user_id = registered_user.user_id
-               AND EXTRACT(YEAR FROM order_date) = 2020);
-
--- jeden dotaz s predikátem IN s vnořeným selectem (nikoliv IN s množinou konstantních dat)
--- show users who ordered products from the category 'foreign-books'
-SELECT login, first_name, last_name, email
-FROM registered_user
-WHERE user_id IN (SELECT user_id
-                  FROM "order"
-                           LEFT JOIN contains ON "order".order_id = contains.order_id
-                           LEFT JOIN product ON contains.product_id = product.product_id
-                           LEFT JOIN category ON product.category_id = category.category_id
-                  WHERE category_name = 'foreign-books');
+CREATE INDEX order_date_x ON "order"(order_date);
+CREATE INDEX order_address_x ON "order"(address);
+-- CREATE INDEX product_price_x ON product(product_price);
+EXPLAIN PLAN FOR
+SELECT user_id, "order".order_id, SUM(product_price * product_count_ordered) AS order_price
+FROM "order"
+         LEFT JOIN contains ON "order".order_id = contains.order_id
+         LEFT JOIN product ON contains.product_id = product.product_id
+WHERE order_date >= '01.01.2019'
+  AND "order".address = 'Brno'
+  AND EXISTS(SELECT *
+             FROM payment
+             WHERE payment.order_id = "order".order_id)
+GROUP BY user_id, "order".order_id
+ORDER BY order_price DESC;
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
 
