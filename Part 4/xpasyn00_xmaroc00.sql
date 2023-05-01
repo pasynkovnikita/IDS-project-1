@@ -247,7 +247,6 @@ begin
         INSERT INTO product (category_id, product_name, product_price, product_count)
         VALUES (CategoryId, ins_product_name, ins_product_price, ins_product_count);
     END IF;
-
 end;
 
 create or replace procedure add_product_to_order(
@@ -255,16 +254,26 @@ create or replace procedure add_product_to_order(
     ins_order_id int,
     ins_product_count_ordered int
 ) as
-    ProductId int;
+    ProductId int;    ProductCount int;
+    Exception_name exception;
 begin
     SELECT product_id
     INTO ProductId
     FROM product
     WHERE product_name = ins_product_name;
 
-    INSERT INTO contains (product_id, order_id, product_count_ordered)
-    VALUES (ProductId, ins_order_id, ins_product_count_ordered);
+    SELECT product_count into ProductCount from product where product_id = ProductId;
 
+    IF (ProductCount >= ins_product_count_ordered) THEN
+        INSERT INTO contains (product_id, order_id, product_count_ordered)
+        VALUES (ProductId, ins_order_id, ins_product_count_ordered);
+    ELSE
+        raise Exception_name;
+    END IF;
+
+    EXCEPTION
+        WHEN Exception_name THEN
+            raise_application_error(-20000, 'Not enough products in stock');
 end;
 
 create or replace procedure create_payment(
