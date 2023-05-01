@@ -1,11 +1,11 @@
-DROP TABLE "user" CASCADE CONSTRAINTS;
-DROP TABLE employee CASCADE CONSTRAINTS;
-DROP TABLE registered_user CASCADE CONSTRAINTS;
-DROP TABLE "order" CASCADE CONSTRAINTS;
-DROP TABLE category CASCADE CONSTRAINTS;
-DROP TABLE product CASCADE CONSTRAINTS;
-DROP TABLE contains CASCADE CONSTRAINTS;
-DROP TABLE payment CASCADE CONSTRAINTS;
+-- DROP TABLE "user" CASCADE CONSTRAINTS;
+-- DROP TABLE employee CASCADE CONSTRAINTS;
+-- DROP TABLE registered_user CASCADE CONSTRAINTS;
+-- DROP TABLE "order" CASCADE CONSTRAINTS;
+-- DROP TABLE category CASCADE CONSTRAINTS;
+-- DROP TABLE product CASCADE CONSTRAINTS;
+-- DROP TABLE contains CASCADE CONSTRAINTS;
+-- DROP TABLE payment CASCADE CONSTRAINTS;
 
 -- alter date because of some error with date input we could not solve
 ALTER SESSION SET NLS_DATE_FORMAT = 'dd.mm.yyyy';
@@ -513,4 +513,25 @@ call add_product_to_order('Harry Potter', 12, 1);
 SELECT *
 FROM product;
 
+-- grant privileges to xmaroc00
+GRANT ALL ON "order" TO XMAROC00;
+GRANT ALL ON contains TO XMAROC00;
+GRANT ALL ON product TO XMAROC00;
+GRANT ALL ON payment TO XMAROC00;
+GRANT ALL ON registered_user TO XMAROC00;
+GRANT ALL ON category TO XMAROC00;
+GRANT ALL ON "user" TO XMAROC00;
+GRANT ALL ON employee TO XMAROC00;
 
+-- create materialized view on XMAROC00 to be used by XPASYN00
+CREATE MATERIALIZED VIEW XMAROC00.user_spending AS
+    SELECT u.user_id,
+           first_name || ' ' || last_name AS user_name,
+           SUM(p.sum)                     AS total_spending
+    FROM registered_user u
+             JOIN "order" o ON u.user_id = o.user_id
+             JOIN payment p ON o.order_id = p.order_id
+    GROUP BY u.user_id, first_name, last_name
+    ORDER BY total_spending DESC;
+
+SELECT * FROM XMAROC00.user_spending;
