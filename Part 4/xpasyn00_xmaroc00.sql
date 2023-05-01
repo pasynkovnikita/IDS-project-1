@@ -474,3 +474,40 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
 -- show usage of procedure with cursor
 call get_products_popularity('01.01.2020', '01.01.2023');
 
+-- create SELECT using WITH and CASE clauses
+-- show users and their spending groups
+WITH user_spending AS (SELECT u.user_id,
+                              first_name || ' ' || last_name AS user_name,
+                              SUM(p.sum)                     AS total_spending
+                       FROM registered_user u
+                                JOIN "order" o ON u.user_id = o.user_id
+                                JOIN payment p ON o.order_id = p.order_id
+                       GROUP BY u.user_id, first_name, last_name
+                       ORDER BY total_spending DESC)
+SELECT user_id,
+       user_name,
+       total_spending,
+       CASE
+           WHEN total_spending < 100 THEN 'Low Spender'
+           WHEN total_spending < 1000 THEN 'Moderate Spender'
+           ELSE 'High Spender'
+           END AS spending_group
+FROM user_spending;
+
+-- show triggers
+-- show how the trigger update_order_status works
+SELECT *
+FROM "order";
+call create_payment(9, 1, '03.05.2023');
+SELECT *
+FROM "order";
+
+-- show how the trigger update_order_status works
+SELECT *
+FROM product;
+call create_order('Brno', '01.01.2023', 1);
+call add_product_to_order('Harry Potter', 12, 1);
+SELECT *
+FROM product;
+
+
