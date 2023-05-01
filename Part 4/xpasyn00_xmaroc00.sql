@@ -523,15 +523,55 @@ GRANT ALL ON category TO XMAROC00;
 GRANT ALL ON "user" TO XMAROC00;
 GRANT ALL ON employee TO XMAROC00;
 
--- create materialized view on XMAROC00 to be used by XPASYN00
-CREATE MATERIALIZED VIEW XMAROC00.user_spending AS
-    SELECT u.user_id,
-           first_name || ' ' || last_name AS user_name,
-           SUM(p.sum)                     AS total_spending
-    FROM registered_user u
-             JOIN "order" o ON u.user_id = o.user_id
-             JOIN payment p ON o.order_id = p.order_id
-    GROUP BY u.user_id, first_name, last_name
-    ORDER BY total_spending DESC;
+-- create materialized view on XMAROC00 using data from XPASYN00
+CREATE MATERIALIZED VIEW XMAROC00.orders_with_users
+AS
+SELECT order_id, registered_user.user_id,
+       first_name || ' ' || last_name AS user_name,
+       "order".address,
+       order_date,
+       status
+FROM XPASYN00."order"
+         LEFT JOIN XPASYN00.registered_user
+                   ON "order".user_id = registered_user.user_id;
 
-SELECT * FROM XMAROC00.user_spending;
+CREATE OR REPLACE VIEW XMAROC00.orders_with_users_view
+AS
+SELECT order_id, registered_user.user_id,
+       first_name || ' ' || last_name AS user_name,
+       "order".address,
+       order_date,
+       status
+FROM XPASYN00."order"
+         LEFT JOIN XPASYN00.registered_user
+                   ON XPASYN00."order".user_id = registered_user.user_id;
+
+
+-- show the materialized view on XMAROC00 to see the difference
+EXPLAIN PLAN FOR
+SELECT *
+FROM XMAROC00.orders_with_users
+ORDER BY order_date DESC;
+SELECT *
+FROM TABLE (DBMS_XPLAN.DISPLAY);
+
+EXPLAIN PLAN FOR
+SELECT *
+FROM XMAROC00.orders_with_users_view
+ORDER BY order_date DESC;
+SELECT *
+FROM TABLE (DBMS_XPLAN.DISPLAY);
+
+EXPLAIN PLAN FOR
+SELECT *
+FROM XMAROC00.orders_with_users
+WHERE user_id = 3
+ORDER BY order_date DESC;
+SELECT * FROM TABLE (DBMS_XPLAN.DISPLAY);
+
+EXPLAIN PLAN FOR
+SELECT *
+FROM XMAROC00.orders_with_users_view
+WHERE user_id = 3
+ORDER BY order_date DESC;
+SELECT * FROM TABLE (DBMS_XPLAN.DISPLAY);
