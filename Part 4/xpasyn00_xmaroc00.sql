@@ -30,15 +30,15 @@ CREATE TABLE employee
 
 CREATE TABLE registered_user
 (
-    user_id           INT          NOT NULL PRIMARY KEY,
-    login             VARCHAR(20)  NOT NULL,
-    password          VARCHAR(20)  NOT NULL,
-    first_name        VARCHAR(20)  NOT NULL,
-    last_name         VARCHAR(20)  NOT NULL,
-    date_of_birth     DATE         NOT NULL,
-    email             VARCHAR(20)  NOT NULL,
-    phone_number      VARCHAR(20)  NOT NULL,
-    address           VARCHAR(256) NOT NULL,
+    user_id       INT          NOT NULL PRIMARY KEY,
+    login         VARCHAR(20)  NOT NULL,
+    password      VARCHAR(20)  NOT NULL,
+    first_name    VARCHAR(20)  NOT NULL,
+    last_name     VARCHAR(20)  NOT NULL,
+    date_of_birth DATE         NOT NULL,
+    email         VARCHAR(20)  NOT NULL,
+    phone_number  VARCHAR(20)  NOT NULL,
+    address       VARCHAR(256) NOT NULL,
 --     check if password is longer than 8 symbols and shorter than 20
     CONSTRAINT length_password CHECK (length(password) between 8 and 20),
 --     validate email
@@ -105,8 +105,8 @@ create or replace trigger update_product_count
     for each row
     enable
 declare
-    v_product_id number;
-    v_product_count number;
+    v_product_id            number;
+    v_product_count         number;
     v_product_count_ordered number;
 begin
     v_product_id := :new.product_id;
@@ -291,22 +291,23 @@ begin
     END IF;
 
     -- add cursor to calculate sum of order from contains table
-DECLARE
-    v_sum product.product_price%TYPE;
-    CURSOR c1 IS
-        SELECT product_price * product_count_ordered AS v_sum
-        FROM contains
-                 JOIN product p on contains.product_id = p.product_id
-        WHERE order_id = ins_order_id;
-BEGIN
-    v_sum := 0;
-    FOR c1rec IN c1 LOOP
-        v_sum := v_sum + c1rec.v_sum;
-    END LOOP;
+    DECLARE
+        v_sum product.product_price%TYPE;
+        CURSOR c1 IS
+            SELECT product_price * product_count_ordered AS v_sum
+            FROM contains
+                     JOIN product p on contains.product_id = p.product_id
+            WHERE order_id = ins_order_id;
+    BEGIN
+        v_sum := 0;
+        FOR c1rec IN c1
+            LOOP
+                v_sum := v_sum + c1rec.v_sum;
+            END LOOP;
 
-    INSERT INTO payment (order_id, user_id, sum, payment_date)
-    VALUES (ins_order_id, ins_user_id, v_sum, ins_payment_date);
-end;
+        INSERT INTO payment (order_id, user_id, sum, payment_date)
+        VALUES (ins_order_id, ins_user_id, v_sum, ins_payment_date);
+    end;
 end;
 
 -- view for getting all products ordered by users
@@ -424,8 +425,8 @@ call add_product_to_order('Football', 10, 3);
 -- add a payment for the order
 call create_payment(2, 1, '03.05.2023');
 call create_payment(2, 1, '03.05.2023');
-call create_payment(5, 1,  '03.05.2023');
-call create_payment(8, 1,  '03.05.2023');
+call create_payment(5, 1, '03.05.2023');
+call create_payment(8, 1, '03.05.2023');
 call create_payment(9, 1, '03.05.2023');
 call create_payment(11, 2, '21.07.2023');
 
@@ -452,10 +453,11 @@ WHERE order_date >= '01.01.2019'
 GROUP BY user_id, "order".order_id
 ORDER BY order_price DESC;
 -- output plan
-SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
+SELECT *
+FROM TABLE (DBMS_XPLAN.DISPLAY);
 -- create index for the query
-CREATE INDEX order_date_x ON "order"(order_date);
-CREATE INDEX order_address_x ON "order"(address);
+CREATE INDEX order_date_x ON "order" (order_date);
+CREATE INDEX order_address_x ON "order" (address);
 -- CREATE INDEX product_price_x ON product(product_price);
 EXPLAIN PLAN FOR
 SELECT user_id, "order".order_id, SUM(product_price * product_count_ordered) AS order_price
@@ -469,7 +471,8 @@ WHERE order_date >= '01.01.2019'
              WHERE payment.order_id = "order".order_id)
 GROUP BY user_id, "order".order_id
 ORDER BY order_price DESC;
-SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
+SELECT *
+FROM TABLE (DBMS_XPLAN.DISPLAY);
 
 -- show usage of procedure with cursor
 call get_products_popularity('01.01.2020', '01.01.2023');
